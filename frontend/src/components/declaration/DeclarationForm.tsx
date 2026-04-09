@@ -7,7 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { DeclarationFormData } from '@/types';
 
-const STEPS = ['Enfant', 'Père', 'Mère', 'Déclarant'];
+const STEPS = ['Enfant', 'Père', 'Mère', 'Déclarant', 'Justificatifs'];
+
+const REQUIRED_DOCUMENTS = [
+  { key: 'certificatAccouchement', label: "Certificat médical d'accouchement", description: 'Délivré par le médecin ou la sage-femme ayant assisté à la naissance' },
+  { key: 'pieceIdentiteDeclarant', label: "Pièce d'identité du déclarant", description: 'Carte nationale d\'identité ou passeport en cours de validité' },
+  { key: 'pieceIdentiteMere', label: "Pièce d'identité de la mère", description: 'Carte nationale d\'identité ou passeport de la mère' },
+  { key: 'livretFamille', label: 'Livret de famille', description: 'Si existant, pour mise à jour. Sinon, un sera établi' },
+] as const;
 
 const emptyForm: DeclarationFormData = {
   childLastName: '',
@@ -41,6 +48,18 @@ interface Props {
 export default function DeclarationForm({ initialData, onSubmit, isLoading }: Props) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<DeclarationFormData>(initialData || emptyForm);
+  const [documents, setDocuments] = useState<Record<string, boolean>>({
+    certificatAccouchement: false,
+    pieceIdentiteDeclarant: false,
+    pieceIdentiteMere: false,
+    livretFamille: false,
+  });
+
+  const allDocumentsChecked = REQUIRED_DOCUMENTS.every((doc) => documents[doc.key]);
+
+  const toggleDocument = (key: string) => {
+    setDocuments((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const updateField = (field: keyof DeclarationFormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -221,6 +240,43 @@ export default function DeclarationForm({ initialData, onSubmit, isLoading }: Pr
               </CardContent>
             </Card>
           )}
+
+          {step === 4 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Justificatifs requis</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Veuillez confirmer que vous disposez des documents suivants. Tous les justificatifs sont obligatoires pour soumettre votre déclaration.
+                </p>
+                {REQUIRED_DOCUMENTS.map((doc) => (
+                  <label
+                    key={doc.key}
+                    className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${
+                      documents[doc.key] ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={documents[doc.key]}
+                      onChange={() => toggleDocument(doc.key)}
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-primary accent-primary"
+                    />
+                    <div>
+                      <p className="font-medium text-sm">{doc.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{doc.description}</p>
+                    </div>
+                  </label>
+                ))}
+                {!allDocumentsChecked && (
+                  <p className="text-sm text-destructive">
+                    Tous les justificatifs doivent être cochés pour pouvoir soumettre la déclaration.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
       </AnimatePresence>
 
@@ -233,7 +289,7 @@ export default function DeclarationForm({ initialData, onSubmit, isLoading }: Pr
             Suivant
           </Button>
         ) : (
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading || !allDocumentsChecked}>
             {isLoading ? 'Enregistrement...' : 'Enregistrer'}
           </Button>
         )}
