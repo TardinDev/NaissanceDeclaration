@@ -19,13 +19,19 @@ interface AuthState {
   hydrate: () => void;
 }
 
+const MOCK_ACCOUNTS: Record<string, { firstName: string; lastName: string; role: Role }> = {
+  'admin@mairie.fr': { firstName: 'Fatou', lastName: 'Diallo', role: 'ADMIN' },
+  'agent@mairie.fr': { firstName: 'Mamadou', lastName: 'Traoré', role: 'AGENT' },
+};
+
 function mockLogin(set: (state: Partial<AuthState>) => void, email: string) {
+  const account = MOCK_ACCOUNTS[email];
   const auth = {
     token: 'mock-jwt-token',
     email,
-    firstName: email.split('@')[0],
-    lastName: 'Utilisateur',
-    role: 'CITIZEN' as Role,
+    firstName: account?.firstName ?? email.split('@')[0],
+    lastName: account?.lastName ?? 'Utilisateur',
+    role: account?.role ?? ('CITIZEN' as Role),
   };
   localStorage.setItem('token', auth.token);
   localStorage.setItem('user', JSON.stringify(auth));
