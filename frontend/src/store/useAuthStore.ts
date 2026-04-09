@@ -1,6 +1,8 @@
 import { create } from 'zustand';
-import api from '@/api/axios';
-import type { ApiResponse, AuthResponse, Role } from '@/types';
+import type { AuthResponse, Role } from '@/types';
+
+// TODO: Passer à false et utiliser l'API réelle quand le backend est prêt
+const MOCK_AUTH = true;
 
 interface AuthState {
   token: string | null;
@@ -19,6 +21,32 @@ interface AuthState {
   hydrate: () => void;
 }
 
+function mockLogin(set: (state: Partial<AuthState>) => void, email: string) {
+  const auth = {
+    token: 'mock-jwt-token',
+    email,
+    firstName: email.split('@')[0],
+    lastName: 'Utilisateur',
+    role: 'CITIZEN' as Role,
+  };
+  localStorage.setItem('token', auth.token);
+  localStorage.setItem('user', JSON.stringify(auth));
+  set({ ...auth, isAuthenticated: true, isLoading: false });
+}
+
+function mockRegister(set: (state: Partial<AuthState>) => void, firstName: string, lastName: string, email: string) {
+  const auth = {
+    token: 'mock-jwt-token',
+    email,
+    firstName,
+    lastName,
+    role: 'CITIZEN' as Role,
+  };
+  localStorage.setItem('token', auth.token);
+  localStorage.setItem('user', JSON.stringify(auth));
+  set({ ...auth, isAuthenticated: true, isLoading: false });
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   email: null,
@@ -29,10 +57,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: false,
   error: null,
 
-  login: async (email: string, password: string) => {
+  login: async (email: string, _password: string) => {
     set({ isLoading: true, error: null });
+    if (MOCK_AUTH) {
+      mockLogin(set, email);
+      return;
+    }
+    const { default: api } = await import('@/api/axios');
     try {
-      const { data } = await api.post<ApiResponse<AuthResponse>>('/auth/login', { email, password });
+      const { data } = await api.post('/auth/login', { email, password: _password });
       const auth = data.data;
       localStorage.setItem('token', auth.token);
       localStorage.setItem('user', JSON.stringify(auth));
@@ -57,8 +90,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   register: async (firstName: string, lastName: string, email: string, password: string) => {
     set({ isLoading: true, error: null });
+    if (MOCK_AUTH) {
+      mockRegister(set, firstName, lastName, email);
+      return;
+    }
+    const { default: api } = await import('@/api/axios');
     try {
-      const { data } = await api.post<ApiResponse<AuthResponse>>('/auth/register', {
+      const { data } = await api.post('/auth/register', {
         firstName,
         lastName,
         email,
