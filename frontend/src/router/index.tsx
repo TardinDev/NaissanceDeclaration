@@ -10,6 +10,8 @@ import MyDeclarations from '@/pages/citizen/MyDeclarations';
 import DashboardAgent from '@/pages/agent/DashboardAgent';
 import DeclarationReview from '@/pages/agent/DeclarationReview';
 import DashboardAdmin from '@/pages/admin/DashboardAdmin';
+import AdminDeclarationDetail from '@/pages/admin/AdminDeclarationDetail';
+import NotFound from '@/pages/NotFound';
 
 export const router = createBrowserRouter([
   {
@@ -76,10 +78,13 @@ export const router = createBrowserRouter([
         path: '/admin/declarations/:id',
         element: (
           <ProtectedRoute allowedRoles={['ADMIN']}>
-            <MyDeclarations />
+            <AdminDeclarationDetail />
           </ProtectedRoute>
         ),
       },
+
+      // 404
+      { path: '*', element: <NotFound /> },
     ],
   },
 ]);

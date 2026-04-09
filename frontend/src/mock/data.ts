@@ -259,6 +259,13 @@ export function mockSubmitDeclaration(id: number): Declaration | undefined {
   return mockDeclarations.find((d) => d.id === id);
 }
 
+export function mockSetInReview(id: number): Declaration | undefined {
+  mockDeclarations = mockDeclarations.map((d) =>
+    d.id === id && d.status === 'SUBMITTED' ? { ...d, status: 'IN_REVIEW' as DeclarationStatus } : d
+  );
+  return mockDeclarations.find((d) => d.id === id);
+}
+
 export function mockReviewDeclaration(id: number, approved: boolean, comment: string): Declaration | undefined {
   const now = new Date().toISOString();
   const agentName = getCurrentUserName();

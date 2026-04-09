@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import DeclarationStatusBadge from './DeclarationStatusBadge';
+import DeclarationTimeline from './DeclarationTimeline';
 import type { Declaration } from '@/types';
 
 interface Props {
@@ -25,6 +26,9 @@ export default function DeclarationDetail({ declaration }: Props) {
           </div>
           <DeclarationStatusBadge status={declaration.status} />
         </CardHeader>
+        <CardContent>
+          <DeclarationTimeline declaration={declaration} />
+        </CardContent>
       </Card>
 
       <Card>

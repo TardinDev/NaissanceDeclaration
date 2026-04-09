@@ -9,9 +9,8 @@ import { Separator } from '@/components/ui/separator';
 import { useDeclarationStore } from '@/store/useDeclarationStore';
 import DeclarationDetail from '@/components/declaration/DeclarationDetail';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { MOCK_MODE, mockSetInReview } from '@/mock/data';
 
-export default function DeclarationReview() {
+export default function AdminDeclarationDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentDeclaration, isLoading, fetchDeclarationById, reviewDeclaration, clearCurrent } =
@@ -20,25 +19,14 @@ export default function DeclarationReview() {
   const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | null>(null);
 
   useEffect(() => {
-    if (id) {
-      fetchDeclarationById(Number(id)).then(() => {
-        // Passer automatiquement en IN_REVIEW à l'ouverture
-        if (MOCK_MODE) {
-          const updated = mockSetInReview(Number(id));
-          if (updated) {
-            // Re-fetch pour mettre à jour l'affichage
-            fetchDeclarationById(Number(id));
-          }
-        }
-      });
-    }
+    if (id) fetchDeclarationById(Number(id));
     return () => clearCurrent();
   }, [id, fetchDeclarationById, clearCurrent]);
 
   const handleReview = async (approved: boolean) => {
     if (!id || !comment.trim()) return;
     await reviewDeclaration(Number(id), { approved, comment });
-    navigate('/agent/dashboard');
+    navigate('/admin/dashboard');
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -47,7 +35,7 @@ export default function DeclarationReview() {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
         <p className="text-muted-foreground">Déclaration non trouvée.</p>
-        <Button variant="outline" className="mt-4" render={<Link to="/agent/dashboard" />}>
+        <Button variant="outline" className="mt-4" render={<Link to="/admin/dashboard" />}>
           Retour au tableau de bord
         </Button>
       </div>
@@ -64,7 +52,7 @@ export default function DeclarationReview() {
         transition={{ duration: 0.4 }}
         className="space-y-6"
       >
-        <Button variant="outline" render={<Link to="/agent/dashboard" />}>
+        <Button variant="outline" render={<Link to="/admin/dashboard" />}>
           Retour
         </Button>
 
