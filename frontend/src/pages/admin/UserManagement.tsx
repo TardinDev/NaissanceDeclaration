@@ -3,8 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import api from '@/api/axios';
-import type { ApiResponse, User, Role } from '@/types';
+import { MOCK_MODE, mockGetUsers, mockChangeUserRole } from '@/mock/data';
+import type { User, Role } from '@/types';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -17,15 +17,25 @@ export default function UserManagement() {
   const loadUsers = async () => {
     setIsLoading(true);
     try {
-      const { data } = await api.get<ApiResponse<User[]>>('/admin/users');
-      setUsers(data.data);
+      if (MOCK_MODE) {
+        setUsers(mockGetUsers());
+      } else {
+        const { default: api } = await import('@/api/axios');
+        const { data } = await api.get('/admin/users');
+        setUsers((data as { data: User[] }).data);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleRoleChange = async (userId: number, newRole: Role) => {
-    await api.patch(`/admin/users/${userId}/role`, { role: newRole });
+    if (MOCK_MODE) {
+      mockChangeUserRole(userId, newRole);
+    } else {
+      const { default: api } = await import('@/api/axios');
+      await api.patch(`/admin/users/${userId}/role`, { role: newRole });
+    }
     setUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
     );

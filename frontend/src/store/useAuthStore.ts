@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import type { AuthResponse, Role } from '@/types';
-
-// TODO: Passer à false et utiliser l'API réelle quand le backend est prêt
-const MOCK_AUTH = true;
+import { MOCK_MODE } from '@/mock/data';
 
 interface AuthState {
   token: string | null;
@@ -59,7 +57,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (email: string, _password: string) => {
     set({ isLoading: true, error: null });
-    if (MOCK_AUTH) {
+    if (MOCK_MODE) {
       mockLogin(set, email);
       return;
     }
@@ -90,7 +88,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   register: async (firstName: string, lastName: string, email: string, password: string) => {
     set({ isLoading: true, error: null });
-    if (MOCK_AUTH) {
+    if (MOCK_MODE) {
       mockRegister(set, firstName, lastName, email);
       return;
     }

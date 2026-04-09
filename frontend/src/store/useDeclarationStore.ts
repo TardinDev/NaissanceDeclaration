@@ -1,6 +1,15 @@
 import { create } from 'zustand';
-import api from '@/api/axios';
-import type { ApiResponse, Declaration, DeclarationFormData, ReviewData } from '@/types';
+import type { Declaration, DeclarationFormData, ReviewData } from '@/types';
+import {
+  MOCK_MODE,
+  mockGetMyDeclarations,
+  mockGetPendingDeclarations,
+  mockGetAllDeclarations,
+  mockGetDeclarationById,
+  mockCreateDeclaration,
+  mockSubmitDeclaration,
+  mockReviewDeclaration,
+} from '@/mock/data';
 
 interface DeclarationState {
   declarations: Declaration[];
@@ -28,8 +37,13 @@ export const useDeclarationStore = create<DeclarationState>((set) => ({
 
   fetchMyDeclarations: async () => {
     set({ isLoading: true, error: null });
+    if (MOCK_MODE) {
+      set({ declarations: mockGetMyDeclarations(), isLoading: false });
+      return;
+    }
+    const { default: api } = await import('@/api/axios');
     try {
-      const { data } = await api.get<ApiResponse<Declaration[]>>('/declarations/my');
+      const { data } = await api.get('/declarations/my');
       set({ declarations: data.data, isLoading: false });
     } catch {
       set({ isLoading: false, error: 'Erreur lors du chargement des déclarations' });
@@ -38,8 +52,13 @@ export const useDeclarationStore = create<DeclarationState>((set) => ({
 
   fetchPendingDeclarations: async () => {
     set({ isLoading: true, error: null });
+    if (MOCK_MODE) {
+      set({ declarations: mockGetPendingDeclarations(), isLoading: false });
+      return;
+    }
+    const { default: api } = await import('@/api/axios');
     try {
-      const { data } = await api.get<ApiResponse<Declaration[]>>('/declarations/pending');
+      const { data } = await api.get('/declarations/pending');
       set({ declarations: data.data, isLoading: false });
     } catch {
       set({ isLoading: false, error: 'Erreur lors du chargement' });
@@ -48,8 +67,13 @@ export const useDeclarationStore = create<DeclarationState>((set) => ({
 
   fetchAllDeclarations: async () => {
     set({ isLoading: true, error: null });
+    if (MOCK_MODE) {
+      set({ declarations: mockGetAllDeclarations(), isLoading: false });
+      return;
+    }
+    const { default: api } = await import('@/api/axios');
     try {
-      const { data } = await api.get<ApiResponse<Declaration[]>>('/declarations/all');
+      const { data } = await api.get('/declarations/all');
       set({ declarations: data.data, isLoading: false });
     } catch {
       set({ isLoading: false, error: 'Erreur lors du chargement' });
@@ -58,8 +82,14 @@ export const useDeclarationStore = create<DeclarationState>((set) => ({
 
   fetchDeclarationById: async (id: number) => {
     set({ isLoading: true, error: null });
+    if (MOCK_MODE) {
+      const decl = mockGetDeclarationById(id);
+      set({ currentDeclaration: decl ?? null, isLoading: false, error: decl ? null : 'Déclaration non trouvée' });
+      return;
+    }
+    const { default: api } = await import('@/api/axios');
     try {
-      const { data } = await api.get<ApiResponse<Declaration>>(`/declarations/${id}`);
+      const { data } = await api.get(`/declarations/${id}`);
       set({ currentDeclaration: data.data, isLoading: false });
     } catch {
       set({ isLoading: false, error: 'Déclaration non trouvée' });
@@ -68,8 +98,14 @@ export const useDeclarationStore = create<DeclarationState>((set) => ({
 
   createDeclaration: async (formData: DeclarationFormData) => {
     set({ isLoading: true, error: null });
+    if (MOCK_MODE) {
+      const declaration = mockCreateDeclaration(formData);
+      set((state) => ({ declarations: [declaration, ...state.declarations], isLoading: false }));
+      return declaration;
+    }
+    const { default: api } = await import('@/api/axios');
     try {
-      const { data } = await api.post<ApiResponse<Declaration>>('/declarations', formData);
+      const { data } = await api.post('/declarations', formData);
       set((state) => ({
         declarations: [data.data, ...state.declarations],
         isLoading: false,
@@ -83,8 +119,13 @@ export const useDeclarationStore = create<DeclarationState>((set) => ({
 
   updateDeclaration: async (id: number, formData: DeclarationFormData) => {
     set({ isLoading: true, error: null });
+    if (MOCK_MODE) {
+      set({ isLoading: false });
+      return;
+    }
+    const { default: api } = await import('@/api/axios');
     try {
-      const { data } = await api.put<ApiResponse<Declaration>>(`/declarations/${id}`, formData);
+      const { data } = await api.put(`/declarations/${id}`, formData);
       set((state) => ({
         declarations: state.declarations.map((d) => (d.id === id ? data.data : d)),
         currentDeclaration: data.data,
@@ -97,8 +138,20 @@ export const useDeclarationStore = create<DeclarationState>((set) => ({
 
   submitDeclaration: async (id: number) => {
     set({ isLoading: true, error: null });
+    if (MOCK_MODE) {
+      const updated = mockSubmitDeclaration(id);
+      if (updated) {
+        set((state) => ({
+          declarations: state.declarations.map((d) => (d.id === id ? updated : d)),
+          currentDeclaration: updated,
+          isLoading: false,
+        }));
+      }
+      return;
+    }
+    const { default: api } = await import('@/api/axios');
     try {
-      const { data } = await api.patch<ApiResponse<Declaration>>(`/declarations/${id}/submit`);
+      const { data } = await api.patch(`/declarations/${id}/submit`);
       set((state) => ({
         declarations: state.declarations.map((d) => (d.id === id ? data.data : d)),
         currentDeclaration: data.data,
@@ -111,8 +164,20 @@ export const useDeclarationStore = create<DeclarationState>((set) => ({
 
   reviewDeclaration: async (id: number, reviewData: ReviewData) => {
     set({ isLoading: true, error: null });
+    if (MOCK_MODE) {
+      const updated = mockReviewDeclaration(id, reviewData.approved, reviewData.comment);
+      if (updated) {
+        set((state) => ({
+          declarations: state.declarations.map((d) => (d.id === id ? updated : d)),
+          currentDeclaration: updated,
+          isLoading: false,
+        }));
+      }
+      return;
+    }
+    const { default: api } = await import('@/api/axios');
     try {
-      const { data } = await api.patch<ApiResponse<Declaration>>(`/declarations/${id}/review`, reviewData);
+      const { data } = await api.patch(`/declarations/${id}/review`, reviewData);
       set((state) => ({
         declarations: state.declarations.map((d) => (d.id === id ? data.data : d)),
         currentDeclaration: data.data,

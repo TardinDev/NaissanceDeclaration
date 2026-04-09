@@ -6,8 +6,8 @@ import { useDeclarationStore } from '@/store/useDeclarationStore';
 import DeclarationCard from '@/components/declaration/DeclarationCard';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import UserManagement from './UserManagement';
-import api from '@/api/axios';
-import type { ApiResponse, Stats } from '@/types';
+import { MOCK_MODE, mockGetStats } from '@/mock/data';
+import type { Stats } from '@/types';
 
 export default function DashboardAdmin() {
   const { declarations, isLoading, fetchAllDeclarations } = useDeclarationStore();
@@ -15,7 +15,13 @@ export default function DashboardAdmin() {
 
   useEffect(() => {
     fetchAllDeclarations();
-    api.get<ApiResponse<Stats>>('/admin/stats').then(({ data }) => setStats(data.data));
+    if (MOCK_MODE) {
+      setStats(mockGetStats());
+    } else {
+      import('@/api/axios').then(({ default: api }) =>
+        api.get('/admin/stats').then(({ data }) => setStats((data as { data: Stats }).data))
+      );
+    }
   }, [fetchAllDeclarations]);
 
   return (
