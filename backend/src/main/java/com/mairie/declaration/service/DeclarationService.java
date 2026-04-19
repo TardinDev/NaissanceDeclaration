@@ -7,6 +7,7 @@ import com.mairie.declaration.entity.Declaration;
 import com.mairie.declaration.entity.User;
 import com.mairie.declaration.entity.enums.DeclarationStatus;
 import com.mairie.declaration.exception.ResourceNotFoundException;
+import com.mairie.declaration.mapper.DeclarationMapper;
 import com.mairie.declaration.repository.DeclarationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.UUID;
 public class DeclarationService {
 
     private final DeclarationRepository declarationRepository;
+    private final DeclarationMapper declarationMapper;
 
     @Transactional
     public DeclarationResponse create(DeclarationRequest request, User citizen) {
@@ -52,20 +54,19 @@ public class DeclarationService {
                 .build();
 
         Declaration saved = declarationRepository.save(declaration);
-        return DeclarationResponse.fromEntity(saved);
+        return declarationMapper.toResponse(saved);
     }
 
     public DeclarationResponse getById(Long id, User currentUser) {
         Declaration declaration = findDeclarationById(id);
         validateAccess(declaration, currentUser);
-        return DeclarationResponse.fromEntity(declaration);
+        return declarationMapper.toResponse(declaration);
     }
 
     public List<DeclarationResponse> getMyDeclarations(User citizen) {
-        return declarationRepository.findByCreatedByOrderByCreatedAtDesc(citizen)
-                .stream()
-                .map(DeclarationResponse::fromEntity)
-                .toList();
+        return declarationMapper.toResponseList(
+                declarationRepository.findByCreatedByOrderByCreatedAtDesc(citizen)
+        );
     }
 
     @Transactional
@@ -101,7 +102,7 @@ public class DeclarationService {
         declaration.setDeclarantQuality(request.getDeclarantQuality());
 
         Declaration saved = declarationRepository.save(declaration);
-        return DeclarationResponse.fromEntity(saved);
+        return declarationMapper.toResponse(saved);
     }
 
     @Transactional
@@ -119,22 +120,29 @@ public class DeclarationService {
         declaration.setDeclarationDate(LocalDateTime.now());
 
         Declaration saved = declarationRepository.save(declaration);
-        return DeclarationResponse.fromEntity(saved);
+        return declarationMapper.toResponse(saved);
     }
 
     public List<DeclarationResponse> getPendingDeclarations() {
-        return declarationRepository
-                .findByStatusInOrderByCreatedAtAsc(List.of(DeclarationStatus.SUBMITTED, DeclarationStatus.IN_REVIEW))
-                .stream()
-                .map(DeclarationResponse::fromEntity)
-                .toList();
+        return declarationMapper.toResponseList(
+                declarationRepository.findByStatusInOrderByCreatedAtAsc(
+                        List.of(DeclarationStatus.SUBMITTED, DeclarationStatus.IN_REVIEW))
+        );
     }
 
     public List<DeclarationResponse> getAllDeclarations() {
-        return declarationRepository.findAllByOrderByCreatedAtDesc()
-                .stream()
-                .map(DeclarationResponse::fromEntity)
-                .toList();
+        return declarationMapper.toResponseList(
+                declarationRepository.findAllByOrderByCreatedAtDesc()
+        );
+    }
+
+    public Declaration getApprovedDeclarationForPdf(Long id, User currentUser) {
+        Declaration declaration = findDeclarationById(id);
+        validateAccess(declaration, currentUser);
+        if (declaration.getStatus() != DeclarationStatus.APPROVED) {
+            throw new IllegalStateException("Seules les déclarations approuvées peuvent être téléchargées en PDF");
+        }
+        return declaration;
     }
 
     @Transactional
@@ -152,7 +160,7 @@ public class DeclarationService {
         declaration.setProcessingDate(LocalDateTime.now());
 
         Declaration saved = declarationRepository.save(declaration);
-        return DeclarationResponse.fromEntity(saved);
+        return declarationMapper.toResponse(saved);
     }
 
     private Declaration findDeclarationById(Long id) {

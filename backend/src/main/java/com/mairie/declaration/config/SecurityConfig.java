@@ -31,6 +31,14 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // Documentation OpenAPI / Swagger UI
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/api-docs/**"
+                        ).permitAll()
+
                         // Endpoints admin
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
