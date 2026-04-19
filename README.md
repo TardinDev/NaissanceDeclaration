@@ -1,9 +1,25 @@
 # Mairie - Déclaration de Naissance
 
+> _Projet 2026 — application web fullstack de dématérialisation de l'état civil._
+
 Application web fullstack permettant aux citoyens de déclarer des naissances en ligne et aux agents de mairie de traiter les demandes — avec génération d'un acte de naissance officiel en PDF.
+
+L'application repose sur une **gestion fine des rôles** (RBAC) avec trois profils distincts, chacun disposant de son propre espace, de ses permissions et de ses écrans dédiés :
+
+- **Citoyen** (`CITIZEN`) — crée et soumet ses déclarations, suit leur statut, télécharge l'acte officiel une fois approuvé.
+- **Agent de mairie** (`AGENT`) — consulte les demandes en attente, les approuve ou les rejette avec commentaire.
+- **Administrateur** (`ADMIN`) — pilote l'ensemble : gestion des utilisateurs, attribution des rôles, statistiques globales.
+
+Les routes API et les écrans frontend sont protégés en bout de chaîne : Spring Security applique le RBAC côté backend (filtre JWT + `@PreAuthorize`), et le frontend masque/redirige selon le rôle issu du token.
 
 > **Circuit complet** : Citoyen → Agent → Admin.
 > Remplace les déplacements en mairie et les formulaires papier par un workflow en ligne, sécurisé et traçable de bout en bout.
+
+---
+
+## Aperçu
+
+![Aperçu de l'application](docs/screenshot.png)
 
 ---
 
@@ -40,7 +56,7 @@ Application web fullstack permettant aux citoyens de déclarer des naissances en
 
 ---
 
-## Architecture & choix techniques (backend)
+## Stack technique (backend en détail)
 
 Le backend n'est pas un empilement de fichiers au hasard : c'est une API Spring Boot pensée pour être **maintenable, testable et documentée**, suivant les standards qu'on retrouve dans les équipes produit sérieuses.
 
