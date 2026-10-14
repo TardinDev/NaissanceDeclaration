@@ -1,129 +1,114 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import DeclarationStatusBadge from './DeclarationStatusBadge';
 import DeclarationTimeline from './DeclarationTimeline';
+import { formatDate } from '@/lib/format';
 import type { Declaration } from '@/types';
 
 interface Props {
   declaration: Declaration;
+  actions?: React.ReactNode;
 }
 
-export default function DeclarationDetail({ declaration }: Props) {
-  const formatDate = (date?: string) => {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('fr-FR');
-  };
+function Section({ title, rows }: { title: string; rows: [string, string | undefined][] }) {
+  return (
+    <section className="rounded-card bg-muted p-7">
+      <h2 className="text-[21px] font-semibold">{title}</h2>
+      <dl className="mt-5 grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
+        {rows.map(([label, value]) => (
+          <div key={label}>
+            <dt className="text-[13px] text-muted-foreground">{label}</dt>
+            <dd className="text-[17px]">{value || '—'}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+export default function DeclarationDetail({ declaration, actions }: Props) {
+  const d = declaration;
+  const optionalDate = (date?: string) => (date ? formatDate(date) : undefined);
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Déclaration {declaration.reference}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Créée le {formatDate(declaration.createdAt)}
-            </p>
+    <div className="space-y-5">
+      <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-[15px] text-muted-foreground tabular-nums">
+            {d.reference} · créée le {formatDate(d.createdAt)}
+          </p>
+          <h1 className="mt-2 text-[32px] font-semibold md:text-[40px]">
+            {d.childFirstNames} {d.childLastName}
+          </h1>
+          <div className="mt-4">
+            <DeclarationStatusBadge status={d.status} />
           </div>
-          <DeclarationStatusBadge status={declaration.status} />
-        </CardHeader>
-        <CardContent>
-          <DeclarationTimeline declaration={declaration} />
-        </CardContent>
-      </Card>
+        </div>
+        {actions && <div className="no-print flex flex-wrap gap-3">{actions}</div>}
+      </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Informations de l'enfant</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-muted-foreground">Nom :</span>{' '}
-            <span className="font-medium">{declaration.childLastName}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Prénom(s) :</span>{' '}
-            <span className="font-medium">{declaration.childFirstNames}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Date de naissance :</span>{' '}
-            <span className="font-medium">{formatDate(declaration.childBirthDate)}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Lieu de naissance :</span>{' '}
-            <span className="font-medium">{declaration.childBirthPlace}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Sexe :</span>{' '}
-            <span className="font-medium">{declaration.childGender}</span>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Informations du père</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div><span className="text-muted-foreground">Nom :</span> {declaration.fatherLastName || '-'}</div>
-            <div><span className="text-muted-foreground">Prénom(s) :</span> {declaration.fatherFirstNames || '-'}</div>
-            <div><span className="text-muted-foreground">Date de naissance :</span> {formatDate(declaration.fatherBirthDate)}</div>
-            <div><span className="text-muted-foreground">Nationalité :</span> {declaration.fatherNationality || '-'}</div>
-            <div><span className="text-muted-foreground">Profession :</span> {declaration.fatherProfession || '-'}</div>
-            <div><span className="text-muted-foreground">Adresse :</span> {declaration.fatherAddress || '-'}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Informations de la mère</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div><span className="text-muted-foreground">Nom :</span> {declaration.motherLastName}</div>
-            <div><span className="text-muted-foreground">Prénom(s) :</span> {declaration.motherFirstNames}</div>
-            <div><span className="text-muted-foreground">Date de naissance :</span> {formatDate(declaration.motherBirthDate)}</div>
-            <div><span className="text-muted-foreground">Nationalité :</span> {declaration.motherNationality || '-'}</div>
-            <div><span className="text-muted-foreground">Profession :</span> {declaration.motherProfession || '-'}</div>
-            <div><span className="text-muted-foreground">Adresse :</span> {declaration.motherAddress || '-'}</div>
-          </CardContent>
-        </Card>
+      <div className="rounded-card bg-muted px-4 py-7 md:px-7">
+        <DeclarationTimeline declaration={d} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Informations du déclarant</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div><span className="text-muted-foreground">Nom :</span> {declaration.declarantLastName}</div>
-          <div><span className="text-muted-foreground">Prénom(s) :</span> {declaration.declarantFirstNames}</div>
-          <div><span className="text-muted-foreground">Qualité :</span> {declaration.declarantQuality}</div>
-        </CardContent>
-      </Card>
-
-      {(declaration.agentComment || declaration.processedByName) && (
-        <>
-          <Separator />
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Traitement</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              {declaration.processedByName && (
-                <div><span className="text-muted-foreground">Traité par :</span> {declaration.processedByName}</div>
-              )}
-              {declaration.processingDate && (
-                <div><span className="text-muted-foreground">Date :</span> {formatDate(declaration.processingDate)}</div>
-              )}
-              {declaration.agentComment && (
-                <div>
-                  <span className="text-muted-foreground">Commentaire :</span>
-                  <p className="mt-1 rounded bg-muted p-3">{declaration.agentComment}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </>
+      {(d.agentComment || d.processedByName) && (
+        <section
+          className={`rounded-card p-7 ${
+            d.status === 'REJECTED' ? 'bg-destructive/8' : d.status === 'APPROVED' ? 'bg-success/8' : 'bg-muted'
+          }`}
+        >
+          <h2 className="text-[21px] font-semibold">Décision du service</h2>
+          {d.agentComment && <p className="mt-3 text-[17px]">{d.agentComment}</p>}
+          <p className="mt-3 text-[13px] text-muted-foreground">
+            {d.processedByName && <>Traité par {d.processedByName}</>}
+            {d.processedByName && d.processingDate && ' · '}
+            {d.processingDate && formatDate(d.processingDate)}
+          </p>
+        </section>
       )}
+
+      <Section
+        title="L'enfant"
+        rows={[
+          ['Nom', d.childLastName],
+          ['Prénom(s)', d.childFirstNames],
+          ['Date de naissance', formatDate(d.childBirthDate)],
+          ['Lieu de naissance', d.childBirthPlace],
+          ['Sexe', d.childGender],
+        ]}
+      />
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <Section
+          title="Le père"
+          rows={[
+            ['Nom', d.fatherLastName],
+            ['Prénom(s)', d.fatherFirstNames],
+            ['Date de naissance', optionalDate(d.fatherBirthDate)],
+            ['Nationalité', d.fatherNationality],
+            ['Profession', d.fatherProfession],
+            ['Adresse', d.fatherAddress],
+          ]}
+        />
+        <Section
+          title="La mère"
+          rows={[
+            ['Nom', d.motherLastName],
+            ['Prénom(s)', d.motherFirstNames],
+            ['Date de naissance', optionalDate(d.motherBirthDate)],
+            ['Nationalité', d.motherNationality],
+            ['Profession', d.motherProfession],
+            ['Adresse', d.motherAddress],
+          ]}
+        />
+      </div>
+
+      <Section
+        title="Le déclarant"
+        rows={[
+          ['Nom', d.declarantLastName],
+          ['Prénom(s)', d.declarantFirstNames],
+          ['Qualité', d.declarantQuality],
+        ]}
+      />
     </div>
   );
 }

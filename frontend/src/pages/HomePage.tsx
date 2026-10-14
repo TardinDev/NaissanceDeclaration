@@ -1,166 +1,209 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAuthStore } from '@/store/useAuthStore';
 import { MOCK_MODE } from '@/mock/data';
 
 const DEMO_ACCOUNTS = [
   {
     label: 'Citoyen',
-    description: 'Déclarer une naissance, suivre ses demandes',
+    description: 'Déclarer une naissance et suivre ses demandes.',
     email: 'citoyen@test.fr',
-    color: 'bg-blue-50 border-blue-200 hover:bg-blue-100',
-    badge: 'text-blue-700 bg-blue-100',
+    path: '/citizen/dashboard',
   },
   {
     label: 'Agent',
-    description: 'Traiter les déclarations (approuver / rejeter)',
+    description: 'Examiner les déclarations, les approuver ou les rejeter.',
     email: 'agent@mairie.fr',
-    color: 'bg-amber-50 border-amber-200 hover:bg-amber-100',
-    badge: 'text-amber-700 bg-amber-100',
+    path: '/agent/dashboard',
   },
   {
-    label: 'Admin',
-    description: 'Statistiques, gestion des utilisateurs et rôles',
+    label: 'Administrateur',
+    description: 'Consulter les statistiques et gérer les rôles.',
     email: 'admin@mairie.fr',
-    color: 'bg-red-50 border-red-200 hover:bg-red-100',
-    badge: 'text-red-700 bg-red-100',
+    path: '/admin/dashboard',
   },
 ];
 
+const STEPS = [
+  {
+    title: 'Créez votre compte.',
+    text: 'Une adresse e-mail et un mot de passe suffisent.',
+  },
+  {
+    title: 'Remplissez le formulaire.',
+    text: "L'enfant, les parents, le déclarant : cinq étapes guidées, avec enregistrement en brouillon.",
+  },
+  {
+    title: 'Suivez votre demande.',
+    text: "Chaque changement de statut apparaît dans votre espace, avec le commentaire de l'agent.",
+  },
+];
+
+const DOCUMENTS = [
+  "Certificat médical d'accouchement",
+  "Pièce d'identité du déclarant",
+  "Pièce d'identité de la mère",
+  'Livret de famille, si vous en avez un',
+];
+
+const reveal = {
+  initial: { opacity: 0, y: 40 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '0px 0px -60px 0px' },
+  transition: { duration: 0.8, ease: 'easeOut' as const },
+};
+
 export default function HomePage() {
+  usePageTitle();
   const { isAuthenticated, isCitizen, isAgent, isAdmin } = useAuth();
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
 
-  const handleDemoLogin = async (email: string) => {
+  const handleDemoLogin = async (email: string, path: string) => {
     await login(email, 'demo');
-    if (email === 'admin@mairie.fr') navigate('/admin/dashboard');
-    else if (email === 'agent@mairie.fr') navigate('/agent/dashboard');
-    else navigate('/citizen/dashboard');
+    navigate(path);
   };
 
+  const primaryCta = !isAuthenticated
+    ? { to: '/register', label: 'Commencer' }
+    : isCitizen
+      ? { to: '/citizen/new-declaration', label: 'Nouvelle déclaration' }
+      : isAgent
+        ? { to: '/agent/dashboard', label: 'Déclarations à traiter' }
+        : { to: '/admin/dashboard', label: 'Administration' };
+
+  const secondaryCta = !isAuthenticated
+    ? { to: '/login', label: 'Se connecter' }
+    : isCitizen
+      ? { to: '/citizen/dashboard', label: 'Mes déclarations' }
+      : isAdmin
+        ? { to: '/agent/dashboard', label: 'Déclarations à traiter' }
+        : null;
+
   return (
-    <div className="container mx-auto px-4 py-16">
-      <motion.div
-        className="text-center max-w-3xl mx-auto"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
-          Déclaration de Naissance{' '}
-          <span className="text-primary">en ligne</span>
-        </h1>
-        <p className="text-lg text-muted-foreground mb-8">
-          Simplifiez vos démarches administratives. Déclarez la naissance de votre enfant
-          directement depuis chez vous, en toute sécurité.
-        </p>
-
-        {!isAuthenticated ? (
-          <div className="flex gap-4 justify-center">
-            <Button size="lg" render={<Link to="/register" />}>
-              Commencer
-            </Button>
-            <Button size="lg" variant="outline" render={<Link to="/login" />}>
-              Se connecter
-            </Button>
-          </div>
-        ) : (
-          <div className="flex gap-4 justify-center">
-            {isCitizen && (
-              <>
-                <Button size="lg" render={<Link to="/citizen/new-declaration" />}>
-                  Nouvelle Déclaration
-                </Button>
-                <Button size="lg" variant="outline" render={<Link to="/citizen/dashboard" />}>
-                  Mon tableau de bord
-                </Button>
-              </>
-            )}
-            {isAgent && (
-              <Button size="lg" render={<Link to="/agent/dashboard" />}>
-                Tableau de bord Agent
-              </Button>
-            )}
-            {isAdmin && (
-              <Button size="lg" render={<Link to="/admin/dashboard" />}>
-                Administration
-              </Button>
-            )}
-          </div>
-        )}
-      </motion.div>
-
-      {/* Section démo pour les recruteurs */}
-      {MOCK_MODE && !isAuthenticated && (
+    <>
+      {/* Hero */}
+      <section className="bg-background">
         <motion.div
-          className="max-w-3xl mx-auto mt-16"
-          initial={{ opacity: 0, y: 40 }}
+          className="wrap flex flex-col items-center py-[100px] text-center md:py-[120px]"
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
         >
-          <div className="text-center mb-6">
-            <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Mode démo</p>
-            <h2 className="text-xl font-semibold mt-1">Testez l'application avec un compte démo</h2>
-            <p className="text-sm text-muted-foreground mt-2">
-              Cliquez sur un rôle pour vous connecter instantanément et explorer le circuit complet.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {DEMO_ACCOUNTS.map((account) => (
-              <button
-                key={account.email}
-                onClick={() => handleDemoLogin(account.email)}
-                className={`rounded-lg border p-5 text-left transition-colors cursor-pointer ${account.color}`}
-              >
-                <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full mb-3 ${account.badge}`}>
-                  {account.label}
-                </span>
-                <p className="text-sm text-gray-700">{account.description}</p>
-                <p className="text-xs text-gray-500 mt-2">{account.email}</p>
-              </button>
-            ))}
+          <p className="text-[17px] font-medium text-muted-foreground md:text-[21px]">Service de l'état civil</p>
+          <h1 className="mt-3 text-[48px] leading-[1.05] font-bold md:text-[56px] lg:text-[80px]">
+            Déclarez une naissance.
+          </h1>
+          <p className="mt-4 max-w-[640px] text-[21px] leading-[1.38] text-muted-foreground md:text-[28px] md:leading-[1.25]">
+            En ligne, depuis chez vous. Sans file d'attente.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
+            <Button size="lg" render={<Link to={primaryCta.to} />}>
+              {primaryCta.label}
+            </Button>
+            {secondaryCta && (
+              <Link to={secondaryCta.to} className="text-[17px] text-primary hover:underline">
+                {secondaryCta.label} <span aria-hidden="true">›</span>
+              </Link>
+            )}
           </div>
         </motion.div>
+      </section>
+
+      {/* Étapes */}
+      <section className="bg-muted py-[60px] md:py-20 lg:py-[100px]">
+        <div className="wrap">
+          <motion.h2 {...reveal} className="text-center text-[32px] font-semibold md:text-[48px]">
+            Trois étapes. C'est tout.
+          </motion.h2>
+          <ol className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-8">
+            {STEPS.map((step, i) => (
+              <motion.li
+                key={step.title}
+                {...reveal}
+                transition={{ ...reveal.transition, delay: i * 0.15 }}
+                className="rounded-card bg-card p-8"
+              >
+                <p className="text-[48px] leading-none font-semibold text-muted-foreground/50" aria-hidden="true">
+                  {i + 1}
+                </p>
+                <h3 className="mt-6 text-[24px] font-semibold">{step.title}</h3>
+                <p className="mt-3 text-[17px] text-muted-foreground">{step.text}</p>
+              </motion.li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* Justificatifs */}
+      <section className="bg-background py-[60px] md:py-20 lg:py-[100px]">
+        <div className="wrap grid grid-cols-1 items-start gap-10 md:grid-cols-2 md:gap-16">
+          <motion.div {...reveal}>
+            <h2 className="text-[32px] font-semibold md:text-[48px]">Ce qu'il vous faut.</h2>
+            <p className="mt-4 text-[19px] text-muted-foreground md:text-[21px]">
+              Préparez ces quatre documents avant de commencer. Le formulaire vous demandera de confirmer que vous
+              les avez.
+            </p>
+          </motion.div>
+          <motion.ul {...reveal} transition={{ ...reveal.transition, delay: 0.15 }} className="divide-y border-y">
+            {DOCUMENTS.map((doc) => (
+              <li key={doc} className="py-5 text-[19px] font-medium md:text-[21px]">
+                {doc}
+              </li>
+            ))}
+          </motion.ul>
+        </div>
+      </section>
+
+      {/* Comptes de démonstration */}
+      {MOCK_MODE && !isAuthenticated && (
+        <section className="bg-muted py-[60px] md:py-20 lg:py-[100px]">
+          <div className="wrap">
+            <motion.div {...reveal} className="text-center">
+              <h2 className="text-[32px] font-semibold md:text-[48px]">Essayez sans compte.</h2>
+              <p className="mx-auto mt-4 max-w-[640px] text-[19px] text-muted-foreground md:text-[21px]">
+                Choisissez un rôle pour vous connecter en un clic et parcourir le circuit complet.
+              </p>
+            </motion.div>
+            <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-8">
+              {DEMO_ACCOUNTS.map((account, i) => (
+                <motion.button
+                  key={account.email}
+                  type="button"
+                  {...reveal}
+                  transition={{ ...reveal.transition, delay: i * 0.15 }}
+                  onClick={() => handleDemoLogin(account.email, account.path)}
+                  className="group flex cursor-pointer flex-col items-start rounded-card bg-card p-8 text-left shadow-card transition-shadow outline-none hover:shadow-hover focus-visible:ring-4 focus-visible:ring-ring/30"
+                >
+                  <h3 className="text-[24px] font-semibold">{account.label}</h3>
+                  <p className="mt-3 flex-1 text-[17px] text-muted-foreground">{account.description}</p>
+                  <p className="mt-6 text-[17px] text-primary group-hover:underline">
+                    Se connecter <span aria-hidden="true">›</span>
+                  </p>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+        </section>
       )}
 
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 max-w-4xl mx-auto"
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
-      >
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <div className="text-3xl mb-3">1</div>
-            <h3 className="font-semibold mb-2">Créez votre compte</h3>
-            <p className="text-sm text-muted-foreground">
-              Inscrivez-vous gratuitement en quelques secondes.
+      {/* Appel à l'action */}
+      {!isAuthenticated && (
+        <section className="bg-ink py-[60px] text-center text-white md:py-20 lg:py-[100px]">
+          <motion.div {...reveal} className="wrap flex flex-col items-center">
+            <h2 className="text-[32px] font-semibold md:text-[48px]">Prêt à commencer ?</h2>
+            <p className="mt-4 max-w-[640px] text-[19px] text-[#a1a1a6] md:text-[21px]">
+              La création du compte est gratuite et prend moins d'une minute.
             </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <div className="text-3xl mb-3">2</div>
-            <h3 className="font-semibold mb-2">Remplissez le formulaire</h3>
-            <p className="text-sm text-muted-foreground">
-              Saisissez les informations de naissance étape par étape.
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <div className="text-3xl mb-3">3</div>
-            <h3 className="font-semibold mb-2">Suivez votre demande</h3>
-            <p className="text-sm text-muted-foreground">
-              Suivez le traitement de votre déclaration en temps réel.
-            </p>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </div>
+            <Button size="lg" className="mt-8" render={<Link to="/register" />}>
+              Créer mon compte
+            </Button>
+          </motion.div>
+        </section>
+      )}
+    </>
   );
 }

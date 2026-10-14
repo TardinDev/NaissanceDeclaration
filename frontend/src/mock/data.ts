@@ -189,17 +189,6 @@ let mockDeclarations: Declaration[] = [
 
 // ── Helpers ────────────────────────────────────────────────────────
 
-function getCurrentUserEmail(): string {
-  try {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      const user = JSON.parse(userStr) as { email: string };
-      return user.email;
-    }
-  } catch { /* ignore */ }
-  return '';
-}
-
 function getCurrentUserName(): string {
   try {
     const userStr = localStorage.getItem('user');
@@ -219,10 +208,7 @@ function generateReference(): string {
 // ── Fonctions mock : Déclarations ──────────────────────────────────
 
 export function mockGetMyDeclarations(): Declaration[] {
-  const email = getCurrentUserEmail();
-  const user = mockUsers.find((u) => u.email === email);
-  if (!user) return mockDeclarations;
-  const name = `${user.firstName} ${user.lastName}`;
+  const name = getCurrentUserName();
   return mockDeclarations.filter((d) => d.createdByName === name);
 }
 
@@ -250,6 +236,13 @@ export function mockCreateDeclaration(data: DeclarationFormData): Declaration {
   };
   mockDeclarations = [declaration, ...mockDeclarations];
   return declaration;
+}
+
+export function mockUpdateDeclaration(id: number, data: DeclarationFormData): Declaration | undefined {
+  mockDeclarations = mockDeclarations.map((d) =>
+    d.id === id && d.status === 'DRAFT' ? { ...d, ...data } : d
+  );
+  return mockDeclarations.find((d) => d.id === id);
 }
 
 export function mockSubmitDeclaration(id: number): Declaration | undefined {
@@ -295,6 +288,16 @@ export function mockGetStats(): Stats {
     totalCitizens: mockUsers.filter((u) => u.role === 'CITIZEN').length,
     totalAgents: mockUsers.filter((u) => u.role === 'AGENT').length,
   };
+}
+
+export function mockFindUserByEmail(email: string): User | undefined {
+  return mockUsers.find((u) => u.email === email);
+}
+
+export function mockAddUser(firstName: string, lastName: string, email: string): void {
+  if (mockFindUserByEmail(email)) return;
+  const id = Math.max(...mockUsers.map((u) => u.id)) + 1;
+  mockUsers = [...mockUsers, { id, email, firstName, lastName, role: 'CITIZEN', createdAt: new Date().toISOString() }];
 }
 
 export function mockGetUsers(): User[] {

@@ -10,185 +10,168 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import type { Role } from '@/types';
+
+const NAV_LINKS: Record<Role, { to: string; label: string }[]> = {
+  CITIZEN: [
+    { to: '/citizen/dashboard', label: 'Mes déclarations' },
+    { to: '/citizen/new-declaration', label: 'Nouvelle déclaration' },
+  ],
+  AGENT: [{ to: '/agent/dashboard', label: 'À traiter' }],
+  ADMIN: [
+    { to: '/admin/dashboard', label: 'Administration' },
+    { to: '/agent/dashboard', label: 'À traiter' },
+  ],
+};
+
+const ROLE_LABELS: Record<Role, string> = {
+  ADMIN: 'Administrateur',
+  AGENT: 'Agent',
+  CITIZEN: 'Citoyen',
+};
 
 export default function Header() {
-  const { isAuthenticated, fullName, role, isCitizen, isAgent, isAdmin } = useAuth();
+  const { isAuthenticated, fullName, role, email } = useAuth();
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const closeMobile = () => setMobileOpen(false);
+
   const handleLogout = () => {
     logout();
+    closeMobile();
     navigate('/');
-    setMobileOpen(false);
   };
 
   const initials = fullName
     .split(' ')
+    .filter(Boolean)
     .map((n) => n[0])
     .join('')
+    .slice(0, 2)
     .toUpperCase();
 
+  const links = role ? NAV_LINKS[role] : [];
   const isActive = (path: string) => location.pathname.startsWith(path);
 
-  const navLinkClass = (path: string) =>
-    `text-sm font-medium transition-colors ${
-      isActive(path)
-        ? 'text-primary'
-        : 'text-muted-foreground hover:text-foreground'
-    }`;
-
-  const roleLabel = role === 'ADMIN' ? 'Administrateur' : role === 'AGENT' ? 'Agent' : 'Citoyen';
-
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2 font-bold text-xl">
-          <span className="text-primary">Mairie</span>
-          <span className="text-muted-foreground">| Naissance</span>
+    <header className="sticky top-0 z-50 border-b border-black/10 bg-white/80 backdrop-blur-xl backdrop-saturate-150">
+      <div className="wrap flex h-12 items-center justify-between">
+        <Link to="/" className="text-[15px] font-semibold tracking-tight text-foreground">
+          Mairie <span className="font-normal text-muted-foreground">État civil</span>
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav aria-label="Navigation principale" className="hidden items-center gap-7 md:flex">
+          {links.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              aria-current={isActive(link.to) ? 'page' : undefined}
+              className={`text-[13px] transition-colors ${
+                isActive(link.to) ? 'text-foreground' : 'text-foreground/70 hover:text-foreground'
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+
           {!isAuthenticated ? (
             <>
-              <Button variant="ghost" render={<Link to="/login" />}>
+              <Link to="/login" className="text-[13px] text-foreground/70 transition-colors hover:text-foreground">
                 Connexion
-              </Button>
-              <Button render={<Link to="/register" />}>
-                Inscription
+              </Link>
+              <Button size="sm" render={<Link to="/register" />}>
+                Créer un compte
               </Button>
             </>
           ) : (
-            <>
-              {isCitizen && (
-                <>
-                  <Link to="/citizen/dashboard" className={navLinkClass('/citizen/dashboard')}>
-                    Tableau de bord
-                  </Link>
-                  <Link to="/citizen/new-declaration" className={navLinkClass('/citizen/new-declaration')}>
-                    Nouvelle Déclaration
-                  </Link>
-                </>
-              )}
-              {isAgent && (
-                <Link to="/agent/dashboard" className={navLinkClass('/agent')}>
-                  Tableau de bord
-                </Link>
-              )}
-              {isAdmin && (
-                <>
-                  <Link to="/admin/dashboard" className={navLinkClass('/admin')}>
-                    Administration
-                  </Link>
-                  <Link to="/agent/dashboard" className={navLinkClass('/agent')}>
-                    Traiter les déclarations
-                  </Link>
-                </>
-              )}
-
-              <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <div className="flex items-center gap-2 p-2">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{fullName}</p>
-                      <p className="text-xs text-muted-foreground">{roleLabel}</p>
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">
-                    Déconnexion
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <button
+                    type="button"
+                    aria-label={`Compte de ${fullName}`}
+                    className="flex size-8 items-center justify-center rounded-full bg-ink text-xs font-medium text-white outline-none focus-visible:ring-4 focus-visible:ring-ring/30"
+                  />
+                }
+              >
+                {initials}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-56">
+                <div className="px-2 py-2">
+                  <p className="text-sm font-medium">{fullName}</p>
+                  <p className="text-xs text-muted-foreground">{email}</p>
+                  {role && <p className="mt-1 text-xs text-muted-foreground">{ROLE_LABELS[role]}</p>}
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">
+                  Déconnexion
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </nav>
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden flex flex-col gap-1.5 p-2"
+          type="button"
+          className="-mr-2 flex size-11 flex-col items-center justify-center gap-1.5 md:hidden"
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Menu"
+          aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+          aria-expanded={mobileOpen}
+          aria-controls="menu-mobile"
         >
-          <span className={`block h-0.5 w-5 bg-foreground transition-transform ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
-          <span className={`block h-0.5 w-5 bg-foreground transition-opacity ${mobileOpen ? 'opacity-0' : ''}`} />
-          <span className={`block h-0.5 w-5 bg-foreground transition-transform ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+          <span className={`block h-px w-[18px] bg-foreground transition-transform ${mobileOpen ? 'translate-y-[3.5px] rotate-45' : ''}`} />
+          <span className={`block h-px w-[18px] bg-foreground transition-transform ${mobileOpen ? '-translate-y-[3.5px] -rotate-45' : ''}`} />
         </button>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t bg-background px-4 py-4 space-y-3">
-          {!isAuthenticated ? (
-            <>
-              <Link to="/login" className="block text-sm font-medium" onClick={() => setMobileOpen(false)}>
-                Connexion
-              </Link>
-              <Link to="/register" className="block text-sm font-medium" onClick={() => setMobileOpen(false)}>
-                Inscription
-              </Link>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-2 pb-3 border-b mb-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">{fullName}</p>
-                  <p className="text-xs text-muted-foreground">{roleLabel}</p>
-                </div>
+        <nav id="menu-mobile" aria-label="Navigation mobile" className="border-t border-black/10 bg-white md:hidden">
+          <div className="wrap flex flex-col py-4">
+            {isAuthenticated && (
+              <div className="mb-2 border-b pb-4">
+                <p className="text-[17px] font-semibold">{fullName}</p>
+                {role && <p className="text-sm text-muted-foreground">{ROLE_LABELS[role]}</p>}
               </div>
-
-              {isCitizen && (
-                <>
-                  <Link to="/citizen/dashboard" className={`block ${navLinkClass('/citizen/dashboard')}`} onClick={() => setMobileOpen(false)}>
-                    Tableau de bord
-                  </Link>
-                  <Link to="/citizen/new-declaration" className={`block ${navLinkClass('/citizen/new-declaration')}`} onClick={() => setMobileOpen(false)}>
-                    Nouvelle Déclaration
-                  </Link>
-                </>
-              )}
-              {isAgent && (
-                <Link to="/agent/dashboard" className={`block ${navLinkClass('/agent')}`} onClick={() => setMobileOpen(false)}>
-                  Tableau de bord
+            )}
+            {links.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                aria-current={isActive(link.to) ? 'page' : undefined}
+                onClick={closeMobile}
+                className="py-3 text-[21px] font-semibold tracking-tight"
+              >
+                {link.label}
+              </Link>
+            ))}
+            {!isAuthenticated ? (
+              <>
+                <Link to="/login" onClick={closeMobile}
+                className="py-3 text-[21px] font-semibold tracking-tight">
+                  Connexion
                 </Link>
-              )}
-              {isAdmin && (
-                <>
-                  <Link to="/admin/dashboard" className={`block ${navLinkClass('/admin')}`} onClick={() => setMobileOpen(false)}>
-                    Administration
-                  </Link>
-                  <Link to="/agent/dashboard" className={`block ${navLinkClass('/agent')}`} onClick={() => setMobileOpen(false)}>
-                    Traiter les déclarations
-                  </Link>
-                </>
-              )}
-
+                <Link to="/register" onClick={closeMobile}
+                className="py-3 text-[21px] font-semibold tracking-tight">
+                  Créer un compte
+                </Link>
+              </>
+            ) : (
               <button
+                type="button"
                 onClick={handleLogout}
-                className="block text-sm font-medium text-destructive mt-3 pt-3 border-t w-full text-left"
+                className="mt-2 border-t pt-4 pb-1 text-left text-[17px] text-destructive"
               >
                 Déconnexion
               </button>
-            </>
-          )}
-        </div>
+            )}
+          </div>
+        </nav>
       )}
     </header>
   );

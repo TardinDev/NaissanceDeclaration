@@ -1,8 +1,6 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import DeclarationStatusBadge from './DeclarationStatusBadge';
+import { formatDate } from '@/lib/format';
 import type { Declaration } from '@/types';
 
 interface Props {
@@ -12,42 +10,25 @@ interface Props {
 
 export default function DeclarationCard({ declaration, linkPrefix }: Props) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2 }}
+    <Link
+      to={`${linkPrefix}/${declaration.id}`}
+      className="group flex h-full flex-col rounded-card bg-muted p-6 transition-colors outline-none hover:bg-border focus-visible:ring-4 focus-visible:ring-ring/30"
     >
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">{declaration.reference}</CardTitle>
-          <DeclarationStatusBadge status={declaration.status} />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-1 text-sm">
-            <p>
-              <span className="text-muted-foreground">Enfant :</span>{' '}
-              <span className="font-medium">
-                {declaration.childFirstNames} {declaration.childLastName}
-              </span>
-            </p>
-            <p>
-              <span className="text-muted-foreground">Né(e) le :</span>{' '}
-              {new Date(declaration.childBirthDate).toLocaleDateString('fr-FR')}
-            </p>
-            <p>
-              <span className="text-muted-foreground">Lieu :</span> {declaration.childBirthPlace}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Déclaré le {new Date(declaration.createdAt).toLocaleDateString('fr-FR')}
-            </p>
-          </div>
-          <div className="mt-4">
-            <Button variant="outline" size="sm" render={<Link to={`${linkPrefix}/${declaration.id}`} />}>
-              Voir détails
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[13px] text-muted-foreground tabular-nums">{declaration.reference}</p>
+        <DeclarationStatusBadge status={declaration.status} />
+      </div>
+      <h3 className="mt-5 text-[21px] font-semibold">
+        {declaration.childFirstNames} {declaration.childLastName}
+      </h3>
+      <p className="mt-2 flex-1 text-[15px] text-muted-foreground">
+        Né(e) le {formatDate(declaration.childBirthDate)}
+        <br />
+        {declaration.childBirthPlace}
+      </p>
+      <p className="mt-5 text-[15px] text-primary group-hover:underline">
+        Voir le détail <span aria-hidden="true">›</span>
+      </p>
+    </Link>
   );
 }
