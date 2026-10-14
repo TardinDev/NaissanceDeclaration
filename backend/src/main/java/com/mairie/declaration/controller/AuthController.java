@@ -1,5 +1,4 @@
 package com.mairie.declaration.controller;
-
 import com.mairie.declaration.dto.request.LoginRequest;
 import com.mairie.declaration.dto.request.RegisterRequest;
 import com.mairie.declaration.dto.response.ApiResponse;
@@ -23,7 +22,9 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
+
         AuthResponse response = authService.register(request);
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Inscription réussie", response));
@@ -31,6 +32,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
+        
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Connexion réussie", response));
     }
