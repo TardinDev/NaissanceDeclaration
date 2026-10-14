@@ -1,12 +1,11 @@
-import { Badge } from '@/components/ui/badge';
 import type { DeclarationStatus } from '@/types';
 
-const statusConfig: Record<DeclarationStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  DRAFT: { label: 'Brouillon', variant: 'secondary' },
-  SUBMITTED: { label: 'Soumise', variant: 'outline' },
-  IN_REVIEW: { label: 'En cours', variant: 'default' },
-  APPROVED: { label: 'Approuvée', variant: 'default' },
-  REJECTED: { label: 'Rejetée', variant: 'destructive' },
+const STATUS_CONFIG: Record<DeclarationStatus, { label: string; className: string }> = {
+  DRAFT: { label: 'Brouillon', className: 'bg-black/6 text-muted-foreground' },
+  SUBMITTED: { label: 'Soumise', className: 'bg-primary/10 text-primary' },
+  IN_REVIEW: { label: "En cours d'examen", className: 'bg-warning/10 text-warning' },
+  APPROVED: { label: 'Approuvée', className: 'bg-success/10 text-success' },
+  REJECTED: { label: 'Rejetée', className: 'bg-destructive/10 text-destructive' },
 };
 
 interface Props {
@@ -14,22 +13,13 @@ interface Props {
 }
 
 export default function DeclarationStatusBadge({ status }: Props) {
-  const config = statusConfig[status];
+  const config = STATUS_CONFIG[status];
 
   return (
-    <Badge
-      variant={config.variant}
-      className={
-        status === 'APPROVED'
-          ? 'bg-green-600 hover:bg-green-700 text-white'
-          : status === 'IN_REVIEW'
-            ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
-            : status === 'SUBMITTED'
-              ? 'border-blue-500 text-blue-600'
-              : ''
-      }
+    <span
+      className={`inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-xs font-medium whitespace-nowrap ${config.className}`}
     >
       {config.label}
-    </Badge>
+    </span>
   );
 }

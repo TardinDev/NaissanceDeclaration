@@ -11,6 +11,8 @@ import DashboardAgent from '@/pages/agent/DashboardAgent';
 import DeclarationReview from '@/pages/agent/DeclarationReview';
 import DashboardAdmin from '@/pages/admin/DashboardAdmin';
 import AdminDeclarationDetail from '@/pages/admin/AdminDeclarationDetail';
+import PrivacyPage from '@/pages/legal/PrivacyPage';
+import TermsPage from '@/pages/legal/TermsPage';
 import NotFound from '@/pages/NotFound';
 
 export const router = createBrowserRouter([
@@ -20,6 +22,8 @@ export const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
+      { path: '/confidentialite', element: <PrivacyPage /> },
+      { path: '/cgu', element: <TermsPage /> },
 
       // Citizen routes
       {
@@ -35,6 +39,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['CITIZEN']}>
             <NewDeclaration />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/citizen/declarations/:id/edit',
+        element: (
+          <ProtectedRoute allowedRoles={['CITIZEN']}>
+            <NewDeclaration key="edit" />
           </ProtectedRoute>
         ),
       },

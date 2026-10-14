@@ -7,6 +7,7 @@ import {
   mockGetAllDeclarations,
   mockGetDeclarationById,
   mockCreateDeclaration,
+  mockUpdateDeclaration,
   mockSubmitDeclaration,
   mockReviewDeclaration,
 } from '@/mock/data';
@@ -120,7 +121,12 @@ export const useDeclarationStore = create<DeclarationState>((set) => ({
   updateDeclaration: async (id: number, formData: DeclarationFormData) => {
     set({ isLoading: true, error: null });
     if (MOCK_MODE) {
-      set({ isLoading: false });
+      const updated = mockUpdateDeclaration(id, formData);
+      set((state) => ({
+        declarations: updated ? state.declarations.map((d) => (d.id === id ? updated : d)) : state.declarations,
+        currentDeclaration: updated ?? state.currentDeclaration,
+        isLoading: false,
+      }));
       return;
     }
     const { default: api } = await import('@/api/axios');
@@ -133,6 +139,7 @@ export const useDeclarationStore = create<DeclarationState>((set) => ({
       }));
     } catch {
       set({ isLoading: false, error: 'Erreur lors de la mise à jour' });
+      throw new Error('Erreur lors de la mise à jour');
     }
   },
 
@@ -159,6 +166,7 @@ export const useDeclarationStore = create<DeclarationState>((set) => ({
       }));
     } catch {
       set({ isLoading: false, error: 'Erreur lors de la soumission' });
+      throw new Error('Erreur lors de la soumission');
     }
   },
 
@@ -185,6 +193,7 @@ export const useDeclarationStore = create<DeclarationState>((set) => ({
       }));
     } catch {
       set({ isLoading: false, error: 'Erreur lors du traitement' });
+      throw new Error('Erreur lors du traitement');
     }
   },
 

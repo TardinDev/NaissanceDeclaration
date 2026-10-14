@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { AuthResponse, Role } from '@/types';
-import { MOCK_MODE } from '@/mock/data';
+import { MOCK_MODE, mockAddUser, mockFindUserByEmail } from '@/mock/data';
 
 interface AuthState {
   token: string | null;
@@ -16,16 +16,10 @@ interface AuthState {
   register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
-  hydrate: () => void;
 }
 
-const MOCK_ACCOUNTS: Record<string, { firstName: string; lastName: string; role: Role }> = {
-  'admin@mairie.fr': { firstName: 'Fatou', lastName: 'Diallo', role: 'ADMIN' },
-  'agent@mairie.fr': { firstName: 'Mamadou', lastName: 'Traoré', role: 'AGENT' },
-};
-
 function mockLogin(set: (state: Partial<AuthState>) => void, email: string) {
-  const account = MOCK_ACCOUNTS[email];
+  const account = mockFindUserByEmail(email);
   const auth = {
     token: 'mock-jwt-token',
     email,
@@ -46,18 +40,38 @@ function mockRegister(set: (state: Partial<AuthState>) => void, firstName: strin
     lastName,
     role: 'CITIZEN' as Role,
   };
+  mockAddUser(firstName, lastName, email);
   localStorage.setItem('token', auth.token);
   localStorage.setItem('user', JSON.stringify(auth));
   set({ ...auth, isAuthenticated: true, isLoading: false });
 }
 
+// Lu de façon synchrone à la création du store : sinon un rechargement sur une
+// route protégée redirige vers /login avant que la session ne soit restaurée.
+function readStoredSession(): Pick<AuthState, 'token' | 'email' | 'firstName' | 'lastName' | 'role' | 'isAuthenticated'> {
+  const empty = { token: null, email: null, firstName: null, lastName: null, role: null, isAuthenticated: false };
+  try {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    if (!token || !userStr) return empty;
+    const user = JSON.parse(userStr) as AuthResponse;
+    return {
+      token,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      isAuthenticated: true,
+    };
+  } catch {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    return empty;
+  }
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
-  token: null,
-  email: null,
-  firstName: null,
-  lastName: null,
-  role: null,
-  isAuthenticated: false,
+  ...readStoredSession(),
   isLoading: false,
   error: null,
 
@@ -142,25 +156,4 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   clearError: () => set({ error: null }),
-
-  hydrate: () => {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-    if (token && userStr) {
-      try {
-        const user = JSON.parse(userStr) as AuthResponse;
-        set({
-          token,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role as Role,
-          isAuthenticated: true,
-        });
-      } catch {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      }
-    }
-  },
 }));
